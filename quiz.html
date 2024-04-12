@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        .question {
+            margin-bottom: 20px;
+        }
+
+        .submit-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px 20px;
+            text-align: center;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .submit-button:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quiz</h1>
+        <div style="position: absolute; top: 10px; right: 10px;" id="highest-score">
+            Highest Score:
+        </div>
+        <form id="quiz-form">
+            <!-- Questions will be dynamically inserted here -->
+        </form>
+        <button class="submit-button" onclick="submitQuiz()">Submit Answers</button>
+    </div>
+
+    <footer>
+        <p>Quiz App developed by Roberto Solari</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            // Function to fetch questions from Flask and populate the form
+            function loadQuestions() {
+                fetch('/questions')
+                .then(response => response.json())
+                .then(data => {
+                    const quizForm = document.getElementById('quiz-form');
+                    Object.keys(data).forEach(key => {
+                        const question = data[key];
+                        const questionHTML = `
+                            <div class="question">
+                                <h2>${question[1]}</h2>
+                                <input type="radio" name="${key}" value="1"> ${question[2]}<br>
+                                <input type="radio" name="${key}" value="2"> ${question[3]}<br>
+                                <input type="radio" name="${key}" value="3"> ${question[4]}<br>
+                            </div>
+                        `;
+                        quizForm.insertAdjacentHTML('beforeend', questionHTML);
+                    });
+                });
+            }
+
+            loadQuestions();
+        }
+
+
+        function submitQuiz() {
+            const formData = new FormData(document.getElementById('quiz-form'));
+            const answers = {};
+            for (const entry of formData.entries()) {
+                answers[entry[0]] = entry[1];
+            }
+            fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(answers)
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayHighestScore();
+            });
+        }
+
+        function displayHighestScore() {
+            fetch('/highscore')
+            .then(response => response.json())
+            .then(data => {
+                const highestScoreElement = document.getElementById('highest-score');
+                if (data.highest_score !== null) {
+                    highestScoreElement.textContent = `Highest Score: ${data.highest_score}%`;
+                } else {
+                    highestScoreElement.textContent = `No high score recorded yet`;
+                }
+            });
+        }
+
+
+    </script>
+</body>
+</html>
